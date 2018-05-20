@@ -629,7 +629,7 @@ class LevelDBBlockchain(Blockchain):
     def OnAddHeader(self, header):
 
         hHash = header.Hash.ToBytes()
-
+        print("on add header %s " % hHash)
         if hHash not in self._header_index:
             self._header_index.append(hHash)
 
@@ -645,11 +645,12 @@ class LevelDBBlockchain(Blockchain):
 
             self._stored_header_count += 2000
 
-            logger.debug("Trimming stored header index %s" % self._stored_header_count)
+            logger.info("Trimming stored header index %s" % self._stored_header_count)
 
         with self._db.write_batch() as wb:
             wb.put(DBPrefix.DATA_Block + hHash, bytes(8) + header.ToArray())
             wb.put(DBPrefix.SYS_CurrentHeader, hHash + header.Index.to_bytes(4, 'little'))
+            print("Put current header hash to %s " % hHash)
 
     @property
     def BlockCacheCount(self):
