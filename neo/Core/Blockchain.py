@@ -444,6 +444,9 @@ class Blockchain:
     def Resume(self):
         self._paused = False
 
+    def ResetHeadersAfter(self, height):
+        pass
+
     @staticmethod
     def RegisterBlockchain(blockchain):
         """

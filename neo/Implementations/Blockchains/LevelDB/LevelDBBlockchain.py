@@ -82,8 +82,7 @@ class LevelDBBlockchain(Blockchain):
 
     @property
     def HeaderHeight(self):
-        height = len(self._header_index) - 1
-        return height
+        return len(self._header_index) - 1
 
     @property
     def Height(self):
@@ -94,6 +93,16 @@ class LevelDBBlockchain(Blockchain):
         if self._persisting_block:
             return self._persisting_block
         return self.GetBlockByHeight(self.Height)
+
+    def ResetHeadersAfter(self, height):
+        del self._header_index[height:]
+        logger.info("Resetting headers after %s " % height)
+        new_current_header = self.GetHeader(self.CurrentHeaderHash)
+
+        self._stored_header_count = height - 2000
+
+        self.OnAddHeader(new_current_header)
+
 
     @property
     def Path(self):
@@ -131,8 +140,8 @@ class LevelDBBlockchain(Blockchain):
             current_header_height = int.from_bytes(ba[-4:], 'little')
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
-            #            logger.info("current header hash!! %s " % current_header_hash)
-            #            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
+            logger.info("current header hash!! %s " % current_header_hash)
+            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
 
             hashes = []
             try:
@@ -409,6 +418,7 @@ class LevelDBBlockchain(Blockchain):
 
     def AddBlock(self, block):
 
+        print("ADDING BLOCK ? " % block)
         if not block.Hash.ToBytes() in self._block_cache:
             self._block_cache[block.Hash.ToBytes()] = block
 
@@ -827,6 +837,7 @@ class LevelDBBlockchain(Blockchain):
 
                 hash = self._header_index[self._current_block_height + 1]
 
+#                logger.info("Looking for hash %s " % hash)
                 if hash not in self._block_cache:
                     break
 

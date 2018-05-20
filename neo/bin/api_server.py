@@ -192,11 +192,11 @@ def main():
     # Instantiate the blockchain and subscribe to notifications
     blockchain = LevelDBBlockchain(settings.chain_leveldb_path)
     Blockchain.RegisterBlockchain(blockchain)
-    dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-    dbloop.start(.1)
+#    dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+#    dbloop.start(.1)
 
     # Setup twisted reactor, NodeLeader and start the NotificationDB
-    reactor.suggestThreadPoolSize(15)
+#    reactor.suggestThreadPoolSize(15)
     NodeLeader.Instance().Start()
     NotificationDB.instance().start()
 

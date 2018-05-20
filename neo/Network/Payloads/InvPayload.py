@@ -55,7 +55,6 @@ class InvPayload(SerializableMixin):
         """
         try:
             writer.WriteByte(self.Type)
-            #            logger.info("WILL WRITE HASHES %s " % self.Hashes)
             writer.WriteHashes(self.Hashes)
         except Exception as e:
             logger.error("COULD NOT WRITE INVENTORY HASHES %s " % e)

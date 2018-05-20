@@ -24,7 +24,6 @@ class EdgeNode(BaseNode):
             hashstart = offset + (page * num_to_request)
             current_header_height = BC.Default().HeaderHeight + 1
 
-            first = hashstart
             while hashstart < current_header_height and len(hashes) < num_to_request:
                 hash = BC.Default().GetHeaderHash(hashstart)
                 hashes.append(hash)

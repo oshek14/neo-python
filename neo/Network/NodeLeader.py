@@ -58,6 +58,9 @@ class NodeLeader:
 
     even = True
 
+    reset_count = 0
+    reset_blockheight = 0
+
     @staticmethod
     def Instance():
         """
@@ -103,20 +106,26 @@ class NodeLeader:
         BC.Default().PersistBlocks()
 
         elapsed = time.time() - start
-#        print("elapsed %s " % elapsed)
 
         if elapsed > EDGE_NODE_LOOP:
-            #            print("returning, too much time elapsed")
             return
-
-#        print("Block cache lengthe %s " % BC.Default().BlockCacheCount)
 
         bclen = BC.Default().BlockCacheCount
 
         if bclen > 5000:
+            logger.info("RESETTING BLOCK CACHE! %s " % self.reset_count)
             BC.Default()._block_cache = {}
             bclen = 0
-            logger.info("RESETTING BLOCK CACHE!")
+            if BC.Default().Height == self.reset_blockheight:
+                self.reset_count += 1
+            else:
+                self.reset_count = 0
+            self.reset_blockheight = BC.Default().Height
+
+            if self.reset_count > 0:
+                BC.Default().ResetHeadersAfter(self.reset_blockheight +1)
+                self.reset_count = 0
+
 
         current = BC.Default().Height
 
@@ -132,9 +141,6 @@ class NodeLeader:
                 missing_indicies.append(count)
             count += 1
 
-#        print("missing indices: %s " % missing_indicies)
-#        print("missing hashes %s " % (len(missing_hashes)))
-
         startoffset = current + bclen
         count = 0
 
@@ -146,7 +152,8 @@ class NodeLeader:
             if len(missing_hashes):
                 to_request = missing_hashes[0:EDGE_NODE_MHASH_SIZE]
                 del missing_hashes[0:EDGE_NODE_MHASH_SIZE]
-                peer.AskForMoreBlocks(startoffset, count, EDGE_NODE_REQ_SIZE, hashes=to_request)
+                if not None in to_request:
+                    peer.AskForMoreBlocks(startoffset, count, EDGE_NODE_REQ_SIZE, hashes=to_request)
             else:
                 peer.AskForMoreBlocks(startoffset, count, EDGE_NODE_REQ_SIZE)
                 count += 1
