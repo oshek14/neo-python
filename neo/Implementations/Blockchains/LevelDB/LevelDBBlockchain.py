@@ -418,7 +418,9 @@ class LevelDBBlockchain(Blockchain):
 
     def AddBlock(self, block):
 
-        print("ADDING BLOCK ? " % block)
+        if block.Index == 2000190:
+            print("ADDING BLOCK ? " % block)
+
         if not block.Hash.ToBytes() in self._block_cache:
             self._block_cache[block.Hash.ToBytes()] = block
 

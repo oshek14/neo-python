@@ -112,7 +112,7 @@ class NodeLeader:
 
         bclen = BC.Default().BlockCacheCount
 
-        if bclen > 5000:
+        if bclen > 1000:
             logger.info("RESETTING BLOCK CACHE! %s " % self.reset_count)
             BC.Default()._block_cache = {}
             bclen = 0
