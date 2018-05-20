@@ -1,6 +1,6 @@
 from neo.Utils.WalletFixtureTestCase import WalletFixtureTestCase
 from neo.Network.NodeLeader import NodeLeader
-from neo.Network.NeoNode import NeoNode
+from neo.Network.EdgeNode import EdgeNode
 from mock import patch
 from neo.Settings import settings
 from neo.Core.Blockchain import Blockchain
@@ -55,7 +55,7 @@ class LeaderTestCase(WalletFixtureTestCase):
             method(*args)
 
         def mock_connect_tcp(host, port, factory):
-            node = NeoNode()
+            node = EdgeNode()
             node.endpoint = Endpoint(host, port)
             leader.AddConnectedPeer(node)
             return node
@@ -70,8 +70,8 @@ class LeaderTestCase(WalletFixtureTestCase):
 
         with patch('twisted.internet.reactor.connectTCP', mock_connect_tcp):
             with patch('twisted.internet.reactor.callLater', mock_call_later):
-                with patch('neo.Network.NeoNode.NeoNode.Disconnect', mock_disconnect):
-                    with patch('neo.Network.NeoNode.NeoNode.SendSerializedMessage', mock_send_msg):
+                with patch('neo.Network.EdgeNode.EdgeNode.Disconnect', mock_disconnect):
+                    with patch('neo.Network.EdgeNode.EdgeNode.SendSerializedMessage', mock_send_msg):
 
                         leader.Start()
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
@@ -83,7 +83,7 @@ class LeaderTestCase(WalletFixtureTestCase):
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
                         # test adding peer
-                        peer = NeoNode()
+                        peer = EdgeNode()
                         peer.endpoint = Endpoint('hellloo.com', 12344)
                         leader.ADDRS.append('hellloo.com:12344')
                         leader.AddConnectedPeer(peer)
@@ -138,7 +138,7 @@ class LeaderTestCase(WalletFixtureTestCase):
             method(*args)
 
         def mock_connect_tcp(host, port, factory):
-            node = NeoNode()
+            node = EdgeNode()
             node.endpoint = Endpoint(host, port)
             leader.AddConnectedPeer(node)
             return node
@@ -148,7 +148,7 @@ class LeaderTestCase(WalletFixtureTestCase):
 
         with patch('twisted.internet.reactor.connectTCP', mock_connect_tcp):
             with patch('twisted.internet.reactor.callLater', mock_call_later):
-                with patch('neo.Network.NeoNode.NeoNode.SendSerializedMessage', mock_send_msg):
+                with patch('neo.Network.EdgeNode.EdgeNode.SendSerializedMessage', mock_send_msg):
                     leader.Start()
 
                     miner = MinerTransaction()

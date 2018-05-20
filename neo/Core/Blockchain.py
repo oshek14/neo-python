@@ -36,11 +36,8 @@ class Blockchain:
 
     __instance = None
 
-    __blockrequests = set()
-
     _paused = False
 
-    BlockSearchTries = 0
 
     CACHELIM = 4000
     CMISSLIM = 5
@@ -174,18 +171,7 @@ class Blockchain:
         # abstract
         pass
 
-    @property
-    def BlockRequests(self):
-        """
-        Outstanding block requests.
 
-        Returns:
-            set:
-        """
-        return self.__blockrequests
-
-    def ResetBlockRequests(self):
-        self.__blockrequests = set()
 
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
@@ -455,8 +441,6 @@ class Blockchain:
     def OnPersistCompleted(self, block):
         self.PersistCompleted.on_change(block)
 
-    def BlockCacheCount(self):
-        pass
 
     def Pause(self):
         self._paused = True

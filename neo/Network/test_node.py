@@ -1,5 +1,5 @@
 from unittest import TestCase
-from neo.Network.NeoNode import NeoNode
+from neo.Network.BaseNode import BaseNode
 from mock import patch
 from neo.Network.Payloads.VersionPayload import VersionPayload
 from neo.Network.Message import Message
@@ -15,10 +15,10 @@ class Endpoint:
 
 class NodeTestCase(TestCase):
 
-    @patch.object(NeoNode, 'MessageReceived')
+    @patch.object(BaseNode, 'MessageReceived')
     def test_handle_message(self, mock):
 
-        node = NeoNode()
+        node =BaseNode()
         node.endpoint = Endpoint('hello.com', 1234)
         node.host = node.endpoint.host
         node.port = node.endpoint.port
@@ -34,8 +34,6 @@ class NodeTestCase(TestCase):
 
         out = stream.getvalue()
 
-        print("OUT %s " % out)
-
         out1 = out[0:10]
         out2 = out[10:20]
         out3 = out[20:]
@@ -44,8 +42,6 @@ class NodeTestCase(TestCase):
         node.dataReceived(out2)
 
         self.assertEqual(node.buffer_in, out1 + out2)
-#        import pdb
-#        pdb.set_trace()
 
         self.assertEqual(node.bytes_in, 20)
 
@@ -58,10 +54,10 @@ class NodeTestCase(TestCase):
 
         mock.assert_called_once()
 
-    @patch.object(NeoNode, 'SendVersion')
+    @patch.object(BaseNode, 'SendVersion')
     def test_data_received(self, mock):
 
-        node = NeoNode()
+        node = BaseNode()
         node.endpoint = Endpoint('hello.com', 1234)
         node.host = node.endpoint.host
         node.port = node.endpoint.port

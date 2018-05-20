@@ -5,14 +5,15 @@ from neo.Core.Blockchain import Blockchain as BC
 from neo.Implementations.Blockchains.LevelDB.TestLevelDBBlockchain import TestLevelDBBlockchain
 from neo.Core.TX.Transaction import Transaction
 from neo.Core.TX.MinerTransaction import MinerTransaction
-from neo.Network.NeoNode import NeoNode
+from neo.Network.EdgeNode import EdgeNode
+from neo.Network.PeeringEdgeNode import PeeringEdgeNode
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
-from twisted.internet import reactor
+from twisted.internet import reactor,task
+import time
 
-
-class NeoClientFactory(ReconnectingClientFactory):
-    protocol = NeoNode
+class BaseClientFactory(ReconnectingClientFactory):
+    protocol = EdgeNode
     maxRetries = 1
 
     def clientConnectionFailed(self, connector, reason):
@@ -21,6 +22,16 @@ class NeoClientFactory(ReconnectingClientFactory):
         for peer in NodeLeader.Instance().Peers:
             if peer.Address == address:
                 peer.connectionLost()
+
+
+class PeeringClientFactory(BaseClientFactory):
+    protocol = PeeringEdgeNode
+
+
+
+EDGE_NODE_LOOP = 3
+EDGE_NODE_REQ_SIZE = 40
+EDGE_NODE_MHASH_SIZE = 20
 
 
 class NodeLeader:
@@ -34,11 +45,6 @@ class NodeLeader:
 
     NodeId = None
 
-    _MissedBlocks = []
-
-    BREQPART = 100
-    NREQMAX = 500
-    BREQMAX = 10000
 
     KnownHashes = []
     MissionsGlobal = []
@@ -48,6 +54,10 @@ class NodeLeader:
     NodeCount = 0
 
     ServiceEnabled = False
+
+    block_loop = None
+
+    even = True
 
     @staticmethod
     def Instance():
@@ -87,39 +97,88 @@ class NodeLeader:
             self.ADDRS = []
             self.Start()
 
+    def OnBlockLoop(self):
+
+        start = time.time()
+
+        BC.Default().PersistBlocks()
+
+        elapsed = time.time() - start
+#        print("elapsed %s " % elapsed)
+
+        if elapsed > EDGE_NODE_LOOP:
+#            print("returning, too much time elapsed")
+            return
+
+#        print("Block cache lengthe %s " % BC.Default().BlockCacheCount)
+
+        bclen = BC.Default().BlockCacheCount
+
+        if bclen > 5000:
+            BC.Default()._block_cache = {}
+            bclen = 0
+            logger.info("RESETTING BLOCK CACHE!")
+
+        current = BC.Default().Height
+
+        start_hash_height = BC.Default().Height+1
+        count = 0
+        missing_hashes = []
+        missing_indicies = []
+        bcache = BC.Default()._block_cache
+        while count < bclen:
+            target_hash = BC.Default().GetHeaderHash(start_hash_height + count)
+            if not target_hash in bcache.keys():
+                missing_hashes.append(target_hash)
+                missing_indicies.append(count)
+            count+=1
+
+#        print("missing indices: %s " % missing_indicies)
+#        print("missing hashes %s " % (len(missing_hashes)))
+
+        startoffset = current + bclen
+        count = 0
+
+        self.even = not self.even
+        plist = self.Peers
+        if self.even:
+            plist.reverse()
+        for peer in plist:
+            if len(missing_hashes):
+                to_request = missing_hashes[0:EDGE_NODE_MHASH_SIZE]
+                del missing_hashes[0:EDGE_NODE_MHASH_SIZE]
+                peer.AskForMoreBlocks(startoffset, count, EDGE_NODE_REQ_SIZE, hashes=to_request)
+            else:
+                peer.AskForMoreBlocks(startoffset, count, EDGE_NODE_REQ_SIZE)
+                count += 1
+
     def Start(self):
         """Start connecting to the node list."""
         # start up endpoints
-        start_delay = 0
+
+        self.block_loop = task.LoopingCall(self.OnBlockLoop)
+        self.block_loop.start(EDGE_NODE_LOOP)
+
         for bootstrap in settings.SEED_LIST:
             host, port = bootstrap.split(":")
             self.ADDRS.append('%s:%s' % (host, port))
-            reactor.callLater(start_delay, self.SetupConnection, host, port)
-            start_delay += 1
+            self.SetupConnection(host, port)
 
     def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
         if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
             self.ADDRS.append(addr)
-            reactor.callLater(index * 10, self.SetupConnection, host, port)
+            self.SetupConnection(host, port)
 
     def SetupConnection(self, host, port):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-            reactor.connectTCP(host, int(port), NeoClientFactory())
+            reactor.connectTCP(host, int(port), PeeringClientFactory())
 
-    def OnUpdatedMaxPeers(self, old_value, new_value):
-
-        if new_value < old_value:
-            num_to_disconnect = old_value - new_value
-            logger.warning("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
-            for p in self.Peers[-num_to_disconnect:]:
-                p.Disconnect()
-        elif new_value > old_value:
-            for p in self.Peers:
-                p.RequestPeerInfo()
 
     def Shutdown(self):
         """Disconnect all connected peers."""
+        self.block_loop.stop()
+
         for p in self.Peers:
             p.Disconnect()
 
@@ -132,7 +191,6 @@ class NodeLeader:
         """
 
         if peer not in self.Peers:
-
             if len(self.Peers) < settings.CONNECTED_PEER_MAX:
                 self.Peers.append(peer)
             else:
@@ -154,15 +212,6 @@ class NodeLeader:
         if len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
 
-    def ResetBlockRequestsAndCache(self):
-        """Reset the block request counter and its cache."""
-        logger.debug("Resseting Block requests")
-        self.MissionsGlobal = []
-        BC.Default().BlockSearchTries = 0
-        for p in self.Peers:
-            p.myblockrequests = set()
-        BC.Default().ResetBlockRequests()
-        BC.Default()._block_cache = {}
 
     def InventoryReceived(self, inventory):
         """
@@ -174,8 +223,6 @@ class NodeLeader:
         Returns:
             bool: True if processed and verified. False otherwise.
         """
-        if inventory.Hash.ToBytes() in self._MissedBlocks:
-            self._MissedBlocks.remove(inventory.Hash.ToBytes())
 
         if inventory is MinerTransaction:
             return False

@@ -925,8 +925,8 @@ class PromptInterface:
                 "Cannot configure %s try 'config sc-events on|off', 'config debug on|off', 'config sc-debug-notify on|off' or 'config vm-log on|off'" % what)
 
     def run(self):
-        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
-        dbloop.start(.1)
+#        dbloop = task.LoopingCall(Blockchain.Default().PersistBlocks)
+#        dbloop.start(.1)
 
 #        Blockchain.Default().PersistBlocks()
 

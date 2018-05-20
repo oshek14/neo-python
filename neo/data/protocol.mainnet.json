@@ -50,6 +50,7 @@
     "SslCertPassword": "",
     "BootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/Main2210xxx.tar.gz",
     "NotificationBootstrapFile":"https://s3.us-east-2.amazonaws.com/cityofzion/bootstrap_main/MainNotif2210xxx.tar.gz",
-    "DebugStorage":1
+    "DebugStorage":1,
+    "ServiceEnabled":0
   }
 }

@@ -828,10 +828,8 @@ class LevelDBBlockchain(Blockchain):
                 hash = self._header_index[self._current_block_height + 1]
 
                 if hash not in self._block_cache:
-                    self.BlockSearchTries += 1
                     break
 
-                self.BlockSearchTries = 0
                 block = self._block_cache[hash]
 
                 try:
