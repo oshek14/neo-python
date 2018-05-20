@@ -11,6 +11,7 @@ from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.internet import reactor, task
 import time
+import random
 
 
 class BaseClientFactory(ReconnectingClientFactory):
@@ -32,8 +33,8 @@ class PeeringClientFactory(BaseClientFactory):
 EDGE_NODE_LOOP = 3
 EDGE_NODE_REQ_SIZE = 40
 EDGE_NODE_MHASH_SIZE = 20
-MAX_CACHE_SIZE = 5000
-RESET_HEADER_COUNT = 10
+MAX_CACHE_SIZE = 10000
+RESET_HEADER_COUNT = 20
 
 
 class NodeLeader:
@@ -57,8 +58,6 @@ class NodeLeader:
     ServiceEnabled = False
 
     block_loop = None
-
-    even = True
 
     reset_count = 0
     reset_blockheight = 0
@@ -112,12 +111,14 @@ class NodeLeader:
         if elapsed > EDGE_NODE_LOOP:
             return
 
-        bclen = BC.Default().BlockCacheCount
+        bcache = BC.Default()._block_cache
+        bclen = len(bcache)
 
         if bclen > MAX_CACHE_SIZE:
             BC.Default()._block_cache = {}
             bclen = 0
             if BC.Default().Height == self.reset_blockheight:
+                logger.info("Block cache has been reset at same block %s times" % self.reset_count)
                 self.reset_count += 1
             else:
                 self.reset_count = 0
@@ -127,28 +128,26 @@ class NodeLeader:
             if self.reset_count > RESET_HEADER_COUNT:
                 BC.Default().ResetHeadersAfter(self.reset_blockheight)
                 self.reset_count = 0
+                return
 
         current = BC.Default().Height
 
         start_hash_height = BC.Default().Height + 1
         count = 0
         missing_hashes = []
-        missing_indicies = []
-        bcache = BC.Default()._block_cache
+
         while count < bclen:
             target_hash = BC.Default().GetHeaderHash(start_hash_height + count)
             if target_hash not in bcache.keys():
                 missing_hashes.append(target_hash)
-                missing_indicies.append(count)
             count += 1
 
         startoffset = current + bclen
         count = 0
 
-        self.even = not self.even
         plist = self.Peers
-        if self.even:
-            plist.reverse()
+        random.shuffle(plist)
+
         for peer in plist:
             if len(missing_hashes):
                 to_request = missing_hashes[0:EDGE_NODE_MHASH_SIZE]
