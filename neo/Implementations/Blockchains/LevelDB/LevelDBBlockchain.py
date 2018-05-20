@@ -101,6 +101,13 @@ class LevelDBBlockchain(Blockchain):
 
         self._stored_header_count = height - 2000
 
+        for key, value in self._db.iterator(prefix=DBPrefix.IX_HeaderHashList):
+            key = int.from_bytes(key[-4:], 'little')
+            if key >= self._stored_header_count:
+                print("Deleting stored header count %s " % key)
+                self._db.delete(key)
+
+
         self.OnAddHeader(new_current_header)
 
 
