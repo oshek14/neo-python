@@ -9,8 +9,9 @@ from neo.Network.EdgeNode import EdgeNode
 from neo.Network.PeeringEdgeNode import PeeringEdgeNode
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
-from twisted.internet import reactor,task
+from twisted.internet import reactor, task
 import time
+
 
 class BaseClientFactory(ReconnectingClientFactory):
     protocol = EdgeNode
@@ -28,7 +29,6 @@ class PeeringClientFactory(BaseClientFactory):
     protocol = PeeringEdgeNode
 
 
-
 EDGE_NODE_LOOP = 3
 EDGE_NODE_REQ_SIZE = 40
 EDGE_NODE_MHASH_SIZE = 20
@@ -44,7 +44,6 @@ class NodeLeader:
     ADDRS = []
 
     NodeId = None
-
 
     KnownHashes = []
     MissionsGlobal = []
@@ -107,7 +106,7 @@ class NodeLeader:
 #        print("elapsed %s " % elapsed)
 
         if elapsed > EDGE_NODE_LOOP:
-#            print("returning, too much time elapsed")
+            #            print("returning, too much time elapsed")
             return
 
 #        print("Block cache lengthe %s " % BC.Default().BlockCacheCount)
@@ -121,17 +120,17 @@ class NodeLeader:
 
         current = BC.Default().Height
 
-        start_hash_height = BC.Default().Height+1
+        start_hash_height = BC.Default().Height + 1
         count = 0
         missing_hashes = []
         missing_indicies = []
         bcache = BC.Default()._block_cache
         while count < bclen:
             target_hash = BC.Default().GetHeaderHash(start_hash_height + count)
-            if not target_hash in bcache.keys():
+            if target_hash not in bcache.keys():
                 missing_hashes.append(target_hash)
                 missing_indicies.append(count)
-            count+=1
+            count += 1
 
 #        print("missing indices: %s " % missing_indicies)
 #        print("missing hashes %s " % (len(missing_hashes)))
@@ -174,7 +173,6 @@ class NodeLeader:
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
             reactor.connectTCP(host, int(port), PeeringClientFactory())
 
-
     def Shutdown(self):
         """Disconnect all connected peers."""
         self.block_loop.stop()
@@ -211,7 +209,6 @@ class NodeLeader:
             self.ADDRS.remove(peer.Address)
         if len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
-
 
     def InventoryReceived(self, inventory):
         """

@@ -102,10 +102,6 @@ class LeaderTestCase(WalletFixtureTestCase):
 
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
-                        # now on updated max peers test
-                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX, settings.CONNECTED_PEER_MAX - 1)
-
-                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX - 1, 10)
 
                         # now if we remove all peers, it should restart
                         peers = leader.Peers[:]
@@ -114,10 +110,6 @@ class LeaderTestCase(WalletFixtureTestCase):
 
                         # and peers should be equal to the seed list
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
-
-                        # test reset
-                        leader.ResetBlockRequestsAndCache()
-                        self.assertEqual(Blockchain.Default()._block_cache, {})
 
     def _generate_tx(self):
         wallet = self.GetWallet1()

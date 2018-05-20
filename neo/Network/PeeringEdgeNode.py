@@ -3,6 +3,7 @@ from neo.Network.Message import Message
 from twisted.internet import task
 from neo.IO.Helper import Helper as IOHelper
 
+
 class PeeringEdgeNode(EdgeNode):
 
     peer_loop = None
@@ -14,9 +15,7 @@ class PeeringEdgeNode(EdgeNode):
             self.peer_loop.stop()
             self.peer_loop = None
 
-
         super(EdgeNode, self).connectionLost(reason)
-
 
     def ProtocolReady(self):
 

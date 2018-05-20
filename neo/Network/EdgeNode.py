@@ -9,7 +9,6 @@ from twisted.internet import reactor
 
 class EdgeNode(BaseNode):
 
-
     def connectionMade(self):
         """Callback handler from twisted when establishing a new connection."""
         super(EdgeNode, self).connectionMade()
@@ -17,8 +16,6 @@ class EdgeNode(BaseNode):
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
         super(EdgeNode, self).connectionLost(reason)
-
-
 
     def AskForMoreBlocks(self, offset, page, num_to_request, hashes=None):
 
@@ -35,10 +32,9 @@ class EdgeNode(BaseNode):
                 hashstart += 1
 
         if len(hashes) > 0:
-#            self.Log("asked for more blocks ... %s thru %s (%s blocks) " % (first, hashstart, len(hashes)))
+            #            self.Log("asked for more blocks ... %s thru %s (%s blocks) " % (first, hashstart, len(hashes)))
             message = Message("getdata", InvPayload(InventoryType.Block, hashes))
             self.SendSerializedMessage(message)
-
 
     def HandleInvMessage(self, payload):
         """
@@ -68,8 +64,6 @@ class EdgeNode(BaseNode):
         elif inventory.Type == InventoryType.ConsensusInt:
             pass
 
-
-
     def HandleBlockReceived(self, inventory):
         """
         Process a Block inventory payload.
@@ -84,7 +78,6 @@ class EdgeNode(BaseNode):
             self.myblockrequests.remove(blockhash)
 
         self.leader.InventoryReceived(block)
-
 
     def HandleGetBlocksMessageReceived(self, payload):
         """
@@ -114,4 +107,3 @@ class EdgeNode(BaseNode):
         if hcount > 0:
             self.Log("sending inv hashes! %s " % hashes)
             self.SendSerializedMessage(Message('inv', InvPayload(type=InventoryType.Block, hashes=hashes)))
-

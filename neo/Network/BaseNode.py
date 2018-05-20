@@ -18,6 +18,7 @@ from neo.Settings import settings
 
 import traceback
 
+
 class BaseNode(Protocol):
     Version = None
 
@@ -186,7 +187,7 @@ class BaseNode(Protocol):
         if len(self.buffer_in) >= 24:
             self.CheckDataReceived()
 
-    def MessageReceived(self, m:Message):
+    def MessageReceived(self, m: Message):
         """
         Process a message.
 
@@ -220,7 +221,6 @@ class BaseNode(Protocol):
         self.header_loop = task.LoopingCall(self.AskForMoreHeaders)
         self.header_loop.start(10, now=True)
 
-
     def AskForMoreHeaders(self):
         # self.Log("asking for more headers...")
         get_headers_message = Message("getheaders", GetBlocksPayload(hash_start=[BC.Default().CurrentHeaderHash]))
@@ -228,7 +228,6 @@ class BaseNode(Protocol):
 
     def AskForMoreBlocks(self, offset, page, num_to_request, hashes=None):
         pass
-
 
     def HandlePeerInfoReceived(self, payload):
         """Process response of `self.RequestPeerInfo`."""
@@ -270,9 +269,7 @@ class BaseNode(Protocol):
         """
         pass
 
-
-
-    def SendSerializedMessage(self, message:Message):
+    def SendSerializedMessage(self, message: Message):
         """
         Send the `message` to the remote client.
 
@@ -295,7 +292,6 @@ class BaseNode(Protocol):
         if inventory is not None:
             BC.Default().AddHeaders(inventory.Headers)
 
-
     def HandleBlockReceived(self, inventory):
         """
         Process a Block inventory payload.
@@ -305,9 +301,7 @@ class BaseNode(Protocol):
         """
         pass
 
-
     def HandleGetDataMessageReceived(self, payload):
-
         """
         Process a InvPayload payload.
 
@@ -344,7 +338,6 @@ class BaseNode(Protocol):
             elif inventory.Type == InventoryType.ConsensusInt:
                 if item:
                     self.SendSerializedMessage(Message(command='consensus', payload=item))
-
 
     def HandleGetBlocksMessageReceived(self, payload):
         """

@@ -18,7 +18,7 @@ class NodeTestCase(TestCase):
     @patch.object(BaseNode, 'MessageReceived')
     def test_handle_message(self, mock):
 
-        node =BaseNode()
+        node = BaseNode()
         node.endpoint = Endpoint('hello.com', 1234)
         node.host = node.endpoint.host
         node.port = node.endpoint.port

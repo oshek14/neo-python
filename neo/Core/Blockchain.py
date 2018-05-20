@@ -38,7 +38,6 @@ class Blockchain:
 
     _paused = False
 
-
     CACHELIM = 4000
     CMISSLIM = 5
     LOOPTIME = .1
@@ -170,8 +169,6 @@ class Blockchain:
     def AddHeaders(self, headers):
         # abstract
         pass
-
-
 
     @staticmethod
     def CalculateBonusIgnoreClaimed(inputs, ignore_claimed=True):
@@ -440,7 +437,6 @@ class Blockchain:
 
     def OnPersistCompleted(self, block):
         self.PersistCompleted.on_change(block)
-
 
     def Pause(self):
         self._paused = True
