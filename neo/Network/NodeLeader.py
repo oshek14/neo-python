@@ -32,6 +32,8 @@ class PeeringClientFactory(BaseClientFactory):
 EDGE_NODE_LOOP = 3
 EDGE_NODE_REQ_SIZE = 40
 EDGE_NODE_MHASH_SIZE = 20
+MAX_CACHE_SIZE = 5000
+RESET_HEADER_COUNT = 10
 
 
 class NodeLeader:
@@ -112,20 +114,19 @@ class NodeLeader:
 
         bclen = BC.Default().BlockCacheCount
 
-        if bclen > 1000:
-            logger.info("RESETTING BLOCK CACHE! %s " % self.reset_count)
+        if bclen > MAX_CACHE_SIZE:
             BC.Default()._block_cache = {}
             bclen = 0
             if BC.Default().Height == self.reset_blockheight:
                 self.reset_count += 1
             else:
                 self.reset_count = 0
+
             self.reset_blockheight = BC.Default().Height
 
-            if self.reset_count > 0:
-                BC.Default().ResetHeadersAfter(self.reset_blockheight +1)
+            if self.reset_count > RESET_HEADER_COUNT:
+                BC.Default().ResetHeadersAfter(self.reset_blockheight)
                 self.reset_count = 0
-
 
         current = BC.Default().Height
 
@@ -152,7 +153,7 @@ class NodeLeader:
             if len(missing_hashes):
                 to_request = missing_hashes[0:EDGE_NODE_MHASH_SIZE]
                 del missing_hashes[0:EDGE_NODE_MHASH_SIZE]
-                if not None in to_request:
+                if None not in to_request:
                     peer.AskForMoreBlocks(startoffset, count, EDGE_NODE_REQ_SIZE, hashes=to_request)
             else:
                 peer.AskForMoreBlocks(startoffset, count, EDGE_NODE_REQ_SIZE)

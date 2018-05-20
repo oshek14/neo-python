@@ -18,7 +18,7 @@ from neocore.UInt256 import UInt256
 from neo.Blockchain import GetBlockchain
 from neo.Settings import settings
 from neo.Network.NodeLeader import NodeLeader
-from neo.Network.NeoNode import NeoNode
+from neo.Network.EdgeNode import EdgeNode
 
 
 def mock_request(body):
@@ -470,7 +470,7 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase):
         # lets simulate that at least some addresses are known
         node = NodeLeader.Instance()
         node.ADDRS = ["127.0.0.1:20333", "127.0.0.2:20334"]
-        test_node = NeoNode()
+        test_node = EdgeNode()
         test_node.host = "127.0.0.1"
         test_node.port = 20333
         node.Peers.append(test_node)

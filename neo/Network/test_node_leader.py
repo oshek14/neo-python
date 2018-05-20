@@ -102,7 +102,6 @@ class LeaderTestCase(WalletFixtureTestCase):
 
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
-
                         # now if we remove all peers, it should restart
                         peers = leader.Peers[:]
                         for peer in peers:

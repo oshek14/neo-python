@@ -94,25 +94,24 @@ class LevelDBBlockchain(Blockchain):
             return self._persisting_block
         return self.GetBlockByHeight(self.Height)
 
+    # this is used for when the blockchain gets a bad header
+    # and can't find a block to match it
     def ResetHeadersAfter(self, height):
         del self._header_index[height:]
         logger.info("Resetting headers after %s " % height)
+        logger.info("New header len %s " % len(self._header_index))
+        # reset the
         new_current_header = self.GetHeader(self.CurrentHeaderHash)
 
-        self._stored_header_count = height - 2000
-
-        keys_to_delete = []
+        # delete all existing header hash list
         for key, value in self._db.iterator(prefix=DBPrefix.IX_HeaderHashList):
-            key_index = int.from_bytes(key[-4:], 'little')
-            if key_index >= self._stored_header_count:
-                keys_to_delete.append(key)
+            self._db.delete(key)
 
-        for k in keys_to_delete:
-            print("Deleting stored header count %s " % k)
-            self._db.delete(k)
+        # set stored header count to 0
+        self._stored_header_count = 0
 
+        # now add in the last know good header
         self.OnAddHeader(new_current_header)
-
 
     @property
     def Path(self):
@@ -151,7 +150,7 @@ class LevelDBBlockchain(Blockchain):
             current_header_hash = bytes(ba[:64].decode('utf-8'), encoding='utf-8')
 
             logger.info("current header hash!! %s " % current_header_hash)
-            logger.info("current header height, hashes %s %s %s" %(self._current_block_height, self._header_index, current_header_height) )
+            logger.info("current header height, hashes %s %s %s" % (self._current_block_height, self._header_index, current_header_height))
 
             hashes = []
             try:
@@ -428,8 +427,8 @@ class LevelDBBlockchain(Blockchain):
 
     def AddBlock(self, block):
 
-        if block.Index == 2000190:
-            print("ADDING BLOCK ? " % block)
+        #        if block.Index == 2000190:
+        #            print("ADDING BLOCK ? " % block)
 
         if not block.Hash.ToBytes() in self._block_cache:
             self._block_cache[block.Hash.ToBytes()] = block
@@ -623,7 +622,6 @@ class LevelDBBlockchain(Blockchain):
         return True
 
     def ProcessNewHeaders(self, headers):
-        start = time.clock()
 
         lastheader = headers[-1]
 
@@ -631,7 +629,7 @@ class LevelDBBlockchain(Blockchain):
 
         self._header_index = self._header_index + hashes
 
-        logger.debug("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
+#        logger.info("Process Headers: %s %s" % (lastheader, (time.clock() - start)))
 
         if lastheader is not None:
             self.OnAddHeader(lastheader)
@@ -639,7 +637,7 @@ class LevelDBBlockchain(Blockchain):
     def OnAddHeader(self, header):
 
         hHash = header.Hash.ToBytes()
-        print("on add header %s " % hHash)
+
         if hHash not in self._header_index:
             self._header_index.append(hHash)
 
@@ -655,12 +653,11 @@ class LevelDBBlockchain(Blockchain):
 
             self._stored_header_count += 2000
 
-            logger.info("Trimming stored header index %s" % self._stored_header_count)
+#            logger.info("Trimming stored header index %s" % self._stored_header_count)
 
         with self._db.write_batch() as wb:
             wb.put(DBPrefix.DATA_Block + hHash, bytes(8) + header.ToArray())
             wb.put(DBPrefix.SYS_CurrentHeader, hHash + header.Index.to_bytes(4, 'little'))
-            print("Put current header hash to %s " % hHash)
 
     @property
     def BlockCacheCount(self):
