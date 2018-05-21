@@ -158,6 +158,7 @@ class BaseNode(Protocol):
 
         # The message header was successfully extracted, and we have enough enough buffer
         # to extract the full payload
+        orig_buffer_in = self.buffer_in
         try:
             # Extract message bytes from buffer and truncate buffer
             mdata = self.buffer_in[:messageExpectedLength]
@@ -177,6 +178,7 @@ class BaseNode(Protocol):
             traceback.print_exc()
 
             self.Log('Error: Could not extract message: %s ' % e)
+            self.buffer_in = orig_buffer_in
             return
 
         finally:
