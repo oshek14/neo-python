@@ -35,8 +35,6 @@ from neo.Prompt.Commands.Invoke import InvokeContract, TestInvokeContract, test_
 from neo.Prompt.Commands.LoadSmartContract import LoadContract, GatherContractDetails, ImportContractAddr, \
     ImportMultiSigContractAddr
 from neo.Prompt.Commands.Send import construct_and_send, parse_and_sign
-from neo.contrib.nex.withdraw import RequestWithdrawFrom, PrintHolds, DeleteHolds, WithdrawOne, WithdrawAll, \
-    CancelWithdrawalHolds, ShowCompletedHolds, CleanupCompletedHolds
 
 from neo.Prompt.Commands.Tokens import token_approve_allowance, token_get_allowance, token_send, token_send_from, \
     token_mint, token_crowdsale_register, token_history
@@ -45,6 +43,7 @@ from neo.Prompt.Commands.Wallet import DeleteAddress, ImportWatchAddr, ImportTok
 
 from neo.Prompt.Utils import get_arg, get_from_addr, get_tx_attr_from_args, get_owners_from_params
 from neo.Prompt.InputParser import InputParser
+from neo.contrib.nex.withdraw import SendVINFromContract
 from neo.Settings import settings, PrivnetConnectionError
 from neo.UserPreferences import preferences
 from neocore.KeyPair import KeyPair
@@ -141,14 +140,17 @@ class PromptInterface:
                 'wallet tkn_history {token symbol}',
                 'wallet unspent',
                 'wallet close',
-                'withdraw_request {asset_name} {contract_hash} {to_addr} {amount}',
-                'withdraw holds # lists all current holds',
-                'withdraw completed # lists completed holds eligible for cleanup',
-                'withdraw cancel # cancels current holds',
-                'withdraw cleanup # cleans up completed holds',
-                'withdraw # withdraws the first hold availabe',
-                'withdraw all # withdraw all holds available',
                 'send {assetId or name} {address} {amount} (--from-addr={addr})',
+                'sendVIN {assetId or name} {to_addr} {from_addr} {amount} {txhash} {output_index}',
+
+                # asset = get_asset_id(wallet, args[0])
+                # to_addr = lookup_addr_str(wallet, args[1])
+                # from_addr = lookup_addr_str(wallet, args[2])
+                # amount = Fixed8.TryParse(args[3], require_positive=True)
+                # txid = UInt256.ParseString(args[4])
+                # output_index = args[5]
+
+
                 'sign {transaction in JSON format}',
                 'testinvoke {contract hash} [{params} or --i] (--attach-neo={amount}, --attach-gas={amount}) (--from-addr={addr}) --no-parse-addr (parse address strings to script hash bytearray)',
                 'debugstorage {on/off/reset}'
@@ -452,45 +454,6 @@ class PromptInterface:
 
         print("Command export %s not found" % item)
 
-    def make_withdraw_request(self, arguments):
-        if not self.Wallet:
-            print("Please open a wallet")
-            return
-        if len(arguments) == 4:
-            RequestWithdrawFrom(self.Wallet, arguments[0], arguments[1], arguments[2], arguments[3])
-        else:
-            print("Incorrect arg length. Use 'withdraw_request {asset_id} {contract_hash} {to_addr} {amount}'")
-
-    def do_withdraw(self, arguments):
-        if not self.Wallet:
-            print("Please open a wallet")
-            return
-
-        item = get_arg(arguments, 0)
-
-        if item:
-
-            if item == 'holds':
-                PrintHolds(self.Wallet)
-            elif item == 'delete_holds':
-                index_to_delete = -1
-                if get_arg(arguments, 1) and int(get_arg(arguments, 1)) > -1:
-                    index_to_delete = int(get_arg(arguments, 1))
-                DeleteHolds(self.Wallet, index_to_delete)
-            elif item == 'cancel_holds':
-                if len(arguments) > 1:
-                    CancelWithdrawalHolds(self.Wallet, get_arg(arguments, 1))
-                else:
-                    print("Please specify contract hash to cancel holds for")
-            elif item == 'completed':
-                ShowCompletedHolds(self.Wallet)
-            elif item == 'cleanup':
-                CleanupCompletedHolds(self.Wallet)
-            elif item == 'all':
-                WithdrawAll(self.Wallet)
-        else:
-            WithdrawOne(self.Wallet)
-
     def do_notifications(self, arguments):
         if NotificationDB.instance() is None:
             print("No notification DB Configured")
@@ -585,6 +548,9 @@ class PromptInterface:
 
     def do_send(self, arguments):
         construct_and_send(self, self.Wallet, arguments)
+
+    def do_send_vin(self, arguments):
+        SendVINFromContract(self.Wallet, arguments)
 
     def do_sign(self, arguments):
         jsn = get_arg(arguments)
@@ -973,6 +939,8 @@ class PromptInterface:
                         self.show_wallet(arguments)
                     elif command == 'send':
                         self.do_send(arguments)
+                    elif command == 'send_vin':
+                        self.do_send_vin(arguments)
                     elif command == 'sign':
                         self.do_sign(arguments)
                     elif command == 'block':
@@ -989,10 +957,6 @@ class PromptInterface:
                         self.show_contract_state(arguments)
                     elif command == 'testinvoke':
                         self.test_invoke_contract(arguments)
-                    elif command == 'withdraw_request':
-                        self.make_withdraw_request(arguments)
-                    elif command == 'withdraw':
-                        self.do_withdraw(arguments)
                     elif command == 'notifications':
                         self.do_notifications(arguments)
                     elif command == 'mem':

@@ -278,6 +278,8 @@ class LevelDBBlockchain(Blockchain):
             except Exception as e:
                 logger.info("could not convert argument to bytes :%s " % e)
                 return None
+        elif isinstance(hash, UInt160):
+            hash = hash.ToBytes()
 
         sn = self._db.snapshot()
         contracts = DBCollection(self._db, sn, DBPrefix.ST_Contract, ContractState)
