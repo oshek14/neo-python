@@ -2,7 +2,7 @@ import binascii
 from logzero import logger
 
 from neo.VM.ExecutionEngine import ExecutionEngine
-from neo.VM.OpCode import CALL, SAFE_APPCALL, CHECKSIG, HASH160, HASH256, NOP, SHA1, SHA256, DEPTH, DUP, PACK, TUCK, OVER, \
+from neo.VM.OpCode import CALL, SAFE_APPCALL, UNSAFE_APPCALL, CHECKSIG, HASH160, HASH256, NOP, SHA1, SHA256, DEPTH, DUP, PACK, TUCK, OVER, \
     SYSCALL, TAILCALL, NEWARRAY, NEWSTRUCT, PUSH16, UNPACK, CAT, CHECKMULTISIG, PUSHDATA4
 from neo.VM import VMState
 from neocore.Cryptography.Crypto import Crypto
@@ -81,7 +81,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = cx.NextInstruction
 
-        if opcode == CALL or opcode == SAFE_APPCALL:
+        if opcode == CALL or opcode in [SAFE_APPCALL, UNSAFE_APPCALL]:
             if self.InvocationStack.Count >= maxInvocationStackSize:
                 logger.error("INVOCATION STACK TOO BIG, RETURN FALSE")
                 return False
@@ -188,7 +188,7 @@ class ApplicationEngine(ExecutionEngine):
 
         opcode = cx.NextInstruction
 
-        if opcode == SAFE_APPCALL:
+        if opcode == SAFE_APPCALL or opcode == UNSAFE_APPCALL:
             opreader = cx.OpReader
             # read the current position of the stream
             start_pos = opreader.stream.tell()
@@ -282,7 +282,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == NOP:
             return 0
-        elif opcode == SAFE_APPCALL or opcode == TAILCALL:
+        elif opcode in [SAFE_APPCALL,TAILCALL,UNSAFE_APPCALL]:
             return 10
         elif opcode == SYSCALL:
             return self.GetPriceForSysCall()
