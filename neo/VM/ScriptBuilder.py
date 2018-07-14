@@ -7,7 +7,7 @@ Usage:
 import struct
 import binascii
 from neo.VM.OpCode import PUSHDATA1, PUSHDATA2, PUSHDATA4, PUSHF, PUSHT, PACK, PUSH0, PUSH1, PUSHM1, PUSHBYTES75, \
-    APPCALL, TAILCALL, SYSCALL
+    SAFE_APPCALL, TAILCALL, SYSCALL
 from neo.IO.MemoryStream import MemoryStream
 from neocore.BigInteger import BigInteger
 
@@ -169,12 +169,12 @@ class ScriptBuilder:
             raise Exception("Invalid script")
         if useTailCall:
             return self.Emit(TAILCALL, scriptHash)
-        return self.Emit(APPCALL, scriptHash)
+        return self.Emit(SAFE_APPCALL, scriptHash)
 
     def EmitAppCallWithOperationAndData(self, script_hash, operation, data):
         self.push(data)
         self.push(operation.encode('utf-8').hex())
-        self.Emit(APPCALL, script_hash.Data)
+        self.Emit(SAFE_APPCALL, script_hash.Data)
 
     def EmitAppCallWithOperationAndArgs(self, script_hash, operation, args):
         args.reverse()
@@ -183,12 +183,12 @@ class ScriptBuilder:
         self.push(len(args))
         self.Emit(PACK)
         self.push(operation.encode('utf-8').hex())
-        self.Emit(APPCALL, script_hash.Data)
+        self.Emit(SAFE_APPCALL, script_hash.Data)
 
     def EmitAppCallWithOperation(self, script_hash, operation):
         self.push(False)
         self.push(operation.encode('utf-8').hex())
-        self.Emit(APPCALL, script_hash.Data)
+        self.Emit(SAFE_APPCALL, script_hash.Data)
 
     def EmitAppCallWithJsonArgs(self, script_hash, args):
         args.reverse()
@@ -201,7 +201,7 @@ class ScriptBuilder:
                 self.Emit(PACK)
             else:
                 self.push(a.ToVM())
-        self.Emit(APPCALL, script_hash.Data)
+        self.Emit(SAFE_APPCALL, script_hash.Data)
 
     def EmitSysCall(self, api):
         if api is None:

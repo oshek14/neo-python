@@ -41,6 +41,8 @@ class ExecutionEngine:
     _debug_map = None
     _vm_debugger = None
 
+    _is_safe = False
+
     def write_log(self, message):
         """
         Write a line to the VM instruction log file.
@@ -97,6 +99,10 @@ class ExecutionEngine:
     def ExecutedScriptHashes(self):
         return self._ExecutedScriptHashes
 
+    @property
+    def SafeMode(self):
+        return self._is_safe
+
     def __init__(self, container=None, crypto=None, table=None, service=None, exit_on_error=False):
         self._VMState = VMState.BREAK
         self._ScriptContainer = container
@@ -111,6 +117,7 @@ class ExecutionEngine:
         self.ops_processed = 0
         self._debug_map = None
         self._is_write_log = settings.log_vm_instructions
+        self._is_safe = False
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
@@ -199,7 +206,15 @@ class ExecutionEngine:
                 if istack.Count == 0:
                     self._VMState |= VMState.HALT
 
-            elif opcode == APPCALL or opcode == TAILCALL:
+            elif opcode in [SAFE_APPCALL, UNSAFE_APPCALL, TAILCALL]:
+
+                if self.SafeMode:
+                    logger.error("Attempted to call another contract during safe appcall.")
+                    self.VM_FAULT_and_report(VMFault.SAFE_APPCALL_VIOLATION)
+
+                if opcode == SAFE_APPCALL:
+                    self._is_safe = True
+
                 if self._Table is None:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN2)
 
@@ -978,6 +993,9 @@ class ExecutionEngine:
 
         if id == VMFault.INVALID_JUMP:
             error_msg = "Attemping to JMP/JMPIF/JMPIFNOT to an invalid location."
+
+        elif id == VMFault.SAFE_APPCALL_VIOLATION:
+            error_msg = "Attempted to call another contract during safe appcall."
 
         elif id == VMFault.INVALID_CONTRACT:
             script_hash = args[0]

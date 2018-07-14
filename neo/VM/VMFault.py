@@ -33,6 +33,8 @@ class VMFault(Enum):
     REMOVE_INVALID_INDEX = auto()
     POP_ITEM_NOT_ARRAY = auto()
 
+    SAFE_APPCALL_VIOLATION = auto()
+
     DICT_KEY_NOT_FOUND = auto()
 
     DICT_KEY_ERROR = auto()
