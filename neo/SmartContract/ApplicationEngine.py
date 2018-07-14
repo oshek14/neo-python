@@ -282,7 +282,7 @@ class ApplicationEngine(ExecutionEngine):
 
         if opcode == NOP:
             return 0
-        elif opcode in [SAFE_APPCALL,TAILCALL,UNSAFE_APPCALL]:
+        elif opcode in [SAFE_APPCALL, TAILCALL, UNSAFE_APPCALL]:
             return 10
         elif opcode == SYSCALL:
             return self.GetPriceForSysCall()
