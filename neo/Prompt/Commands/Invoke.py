@@ -355,7 +355,7 @@ def test_invoke(script, wallet, outputs, withdrawal_tx=None,
 
 def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                            from_addr=None, min_fee=DEFAULT_MIN_FEE, invocation_test_mode=True,
-                           debug_map=None, invoke_attrs=None, owners=None):
+                           debug_map=None, invoke_attrs=None, owners=None, unsafe=False):
 
     bc = GetBlockchain()
 
@@ -468,7 +468,12 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             else:
                 sb.push(item)
 
-        sb.EmitAppCall(shash.Data)
+        if unsafe:
+            print("ADDING UNSAFE APPCALL!!")
+            sb.EmitUnsafeAppCall(shash.Data)
+        else:
+            sb.EmitAppCall(shash.Data)
+
         out = sb.ToArray()
 
         outputs = []

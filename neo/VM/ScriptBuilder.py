@@ -7,7 +7,7 @@ Usage:
 import struct
 import binascii
 from neo.VM.OpCode import PUSHDATA1, PUSHDATA2, PUSHDATA4, PUSHF, PUSHT, PACK, PUSH0, PUSH1, PUSHM1, PUSHBYTES75, \
-    SAFE_APPCALL, TAILCALL, SYSCALL
+    SAFE_APPCALL, UNSAFE_APPCALL, TAILCALL, SYSCALL
 from neo.IO.MemoryStream import MemoryStream
 from neocore.BigInteger import BigInteger
 
@@ -170,6 +170,11 @@ class ScriptBuilder:
         if useTailCall:
             return self.Emit(TAILCALL, scriptHash)
         return self.Emit(SAFE_APPCALL, scriptHash)
+
+    def EmitUnsafeAppCall(self, scriptHash):
+        if len(scriptHash) != 20:
+            raise Exception("Invalid script")
+        return self.Emit(UNSAFE_APPCALL, scriptHash)
 
     def EmitAppCallWithOperationAndData(self, script_hash, operation, data):
         self.push(data)

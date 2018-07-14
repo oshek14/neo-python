@@ -42,6 +42,7 @@ class ExecutionEngine:
     _vm_debugger = None
 
     _is_safe = False
+    _current_script_hash = None
 
     def write_log(self, message):
         """
@@ -118,6 +119,7 @@ class ExecutionEngine:
         self._debug_map = None
         self._is_write_log = settings.log_vm_instructions
         self._is_safe = False
+        self._current_script_hash = None
 
     def AddBreakPoint(self, position):
         self.CurrentContext.Breakpoints.add(position)
@@ -208,13 +210,6 @@ class ExecutionEngine:
 
             elif opcode in [SAFE_APPCALL, UNSAFE_APPCALL, TAILCALL]:
 
-                if self.SafeMode:
-                    logger.error("Attempted to call another contract during safe appcall.")
-                    self.VM_FAULT_and_report(VMFault.SAFE_APPCALL_VIOLATION)
-
-                if opcode == SAFE_APPCALL:
-                    self._is_safe = True
-
                 if self._Table is None:
                     return self.VM_FAULT_and_report(VMFault.UNKNOWN2)
 
@@ -236,6 +231,14 @@ class ExecutionEngine:
 
                 if opcode == TAILCALL:
                     istack.Pop().Dispose()
+
+                if self.SafeMode and script_hash != self._current_script_hash:
+                    logger.error("Attempted to call another contract during safe appcall.")
+                    self.VM_FAULT_and_report(VMFault.SAFE_APPCALL_VIOLATION)
+
+                if opcode == SAFE_APPCALL:
+                    self._is_safe = True
+                    self._current_script_hash = script_hash
 
                 self.LoadScript(script)
 
