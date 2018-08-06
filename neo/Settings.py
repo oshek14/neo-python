@@ -217,8 +217,9 @@ class SettingsHolder:
                                      use these standard ports: P2P 20333, RPC 30333.
         """
         self.setup(FILENAME_SETTINGS_PRIVNET)
-        print("-------------=============MOVIDALA==============-------------------")
-        print("-------------=============MOVIDALO==============-------------------")
+
+        
+        print("-------------=============MOVIDA==============-------------------")
         if isinstance(host, str):
             if ":" in host:
                 raise Exception("No protocol prefix or port allowed in host, use just the IP or domain.")
@@ -320,7 +321,7 @@ class SettingsHolder:
             raise PrivnetConnectionError("Error: private network container doesn't seem to be running, or RPC is not enabled.")
 
         print("Privatenet useragent '%s', nonce: %s" % (version["useragent"], version["nonce"]))
-
+        
         # Now check if nonce is the same as in the chain path
         nonce_container = str(version["nonce"])
         neopy_chain_meta_filename = os.path.join(self.chain_leveldb_path, ".privnet-nonce")
