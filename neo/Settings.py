@@ -218,6 +218,7 @@ class SettingsHolder:
         """
         self.setup(FILENAME_SETTINGS_PRIVNET)
         print("-------------=============MOVIDALA==============-------------------")
+        print("-------------=============MOVIDALO==============-------------------")
         if isinstance(host, str):
             if ":" in host:
                 raise Exception("No protocol prefix or port allowed in host, use just the IP or domain.")
