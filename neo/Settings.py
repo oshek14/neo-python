@@ -217,6 +217,7 @@ class SettingsHolder:
                                      use these standard ports: P2P 20333, RPC 30333.
         """
         self.setup(FILENAME_SETTINGS_PRIVNET)
+        print("-------------=============MOVIDA==============-------------------")
         if isinstance(host, str):
             if ":" in host:
                 raise Exception("No protocol prefix or port allowed in host, use just the IP or domain.")
